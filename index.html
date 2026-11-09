@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CyberShield AI | Threat Detection</title>
+
+<style>
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: Arial, sans-serif;
+}
+
+body {
+  background: #0b1220;
+  color: #e5e7eb;
+  min-height: 100vh;
+}
+
+header {
+  background: #111c30;
+  padding: 22px 7%;
+  border-bottom: 1px solid #26364f;
+}
+
+header h1 {
+  color: #38bdf8;
+  font-size: 25px;
+}
+
+header p {
+  color: #94a3b8;
+  margin-top: 7px;
+}
+
+.container {
+  width: 90%;
+  max-width: 1100px;
+  margin: 30px auto;
+}
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-bottom: 25px;
+}
+
+.card {
+  background: #17243a;
+  padding: 22px;
+  border-radius: 12px;
+  border: 1px solid #293c59;
+}
+
+.card h3 {
+  font-size: 14px;
+  color: #94a3b8;
+  margin-bottom: 12px;
+}
+
+.card h2 {
+  font-size: 30px;
+  color: #38bdf8;
+}
+
+.panel {
+  background: #17243a;
+  padding: 25px;
+  border: 1px solid #293c59;
+  border-radius: 12px;
+  margin-bottom: 22px;
+}
+
+.panel h2 {
+  margin-bottom: 18px;
+  font-size: 20px;
+}
+
+label {
+  display: block;
+  margin: 15px 0 8px;
+  color: #cbd5e1;
+}
+
+select, textarea {
+  width: 100%;
+  background: #0b1220;
+  color: white;
+  border: 1px solid #40516b;
+  padding: 13px;
+  border-radius: 7px;
+  font-size: 15px;
+}
+
+textarea {
+  min-height: 115px;
+  resize: vertical;
+}
+
+button {
+  background: #0284c7;
+  color: white;
+  border: none;
+  border-radius: 7px;
+  padding: 13px 20px;
+  margin-top: 17px;
+  cursor: pointer;
+  font-size: 15px;
+}
+
+button:hover {
+  background: #0369a1;
+}
+
+.secondary {
+  background: #334155;
+}
+
+.result {
+  margin-top: 20px;
+  padding: 18px;
+  background: #0b1220;
+  border-radius: 9px;
+  display: none;
+  border: 1px solid #40516b;
+}
+
+.result h3 {
+  margin-bottom: 12px;
+}
+
+.result p {
+  margin: 9px 0;
+  line-height: 1.5;
+}
+
+.safe { color: #4ade80; }
+.warning { color: #fbbf24; }
+.danger { color: #fb7185; }
+
+.history-item {
+  border-bottom: 1px solid #334155;
+  padding: 13px 0;
+  overflow-wrap: anywhere;
+}
+
+footer {
+  text-align: center;
+  color: #64748b;
+  padding: 25px;
+}
+
+@media(max-width: 650px) {
+  .cards {
+    grid-template-columns: 1fr;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <h1>🛡 CyberShield AI</h1>
+  <p>AI-Based Cybersecurity Threat Detection System</p>
+</header>
+
+<div class="container">
+
+  <div class="cards">
+    <div class="card">
+      <h3>Total Scans</h3>
+      <h2 id="total">0</h2>
+    </div>
+
+    <div class="card">
+      <h3>Threats Detected</h3>
+      <h2 id="threats">0</h2>
+    </div>
+
+    <div class="card">
+      <h3>Safe Results</h3>
+      <h2 id="safe">0</h2>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>🔍 Threat Detection Scanner</h2>
+
+    <label>Select Threat Category</label>
+
+    <select id="category">
+      <option value="phishing">Phishing Detection</option>
+      <option value="network">Network Intrusion Detection</option>
+      <option value="malware">Malware Indicator Detection</option>
+      <option value="access">Unauthorized Access Detection</option>
+    </select>
+
+    <label>Enter Data for Analysis</label>
+
+    <textarea id="input"
+      placeholder="Enter a URL, message, network event or file name..."></textarea>
+
+    <button onclick="analyze()">Analyze Threat</button>
+    <button class="secondary" onclick="loadSample()">Load Sample</button>
+
+    <div class="result" id="result">
+      <h3 id="status"></h3>
+      <p id="score"></p>
+      <p id="details"></p>
+      <p id="advice"></p>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>📊 Scan History</h2>
+    <div id="history">No scans performed yet.</div>
+    <button class="secondary" onclick="clearHistory()">
+      Clear History
+    </button>
+  </div>
+
+</div>
+
+<footer>
+  CyberShield AI | Educational Security Prototype
+</footer>
+
+<script>
+
+let scans = 0;
+let threats = 0;
+let safe = 0;
+
+const samples = {
+  phishing:
+    "URGENT! Your bank account is blocked. Verify your password at http://secure-login-example.test",
+
+  network:
+    "Multiple failed login attempts from an unknown IP. Unusual access detected.",
+
+  malware:
+    "File: suspicious_trojan.exe. Unknown executable detected.",
+
+  access:
+    "User admin attempted 15 failed login attempts in one minute."
+};
+
+function loadSample() {
+  let type = document.getElementById("category").value;
+  document.getElementById("input").value = samples[type];
+}
+
+function analyze() {
+
+  let type = document.getElementById("category").value;
+  let input = document.getElementById("input").value.trim();
+
+  if (!input) {
+    alert("Please enter data for analysis!");
+    return;
+  }
+
+  let score = 0;
+  let reasons = [];
+
+  function add(points, reason) {
+    score += points;
+    reasons.push(reason);
+  }
+
+  let data = input.toLowerCase();
+
+  // PHISHING DETECTION
+  if (type === "phishing") {
+
+    if (/urgent|immediately|act now|account blocked/.test(data))
+      add(25, "Urgent or pressure-based language");
+
+    if (/password|bank|verify|login/.test(data))
+      add(20, "Sensitive account-related wording");
+
+    if (/bit\.ly|tinyurl|shorturl/.test(data))
+      add(25, "URL shortening service detected");
+
+    if (/https?:\/\//.test(data))
+      add(10, "Contains a URL requiring verification");
+
+    if (/claim your prize|won a prize|free reward/.test(data))
+      add(25, "Possible reward or prize lure");
+
+    if (/secure-login|verify-account/.test(data))
+      add(25, "Suspicious login-related URL wording");
+  }
+
+  // NETWORK INTRUSION DETECTION
+  if (type === "network") {
+
+    if (/multiple failed|repeated failed|15 failed|20 failed/.test(data))
+      add(40, "Repeated failed login activity");
+
+    if (/unknown ip|unusual ip|unknown source/.test(data))
+      add(25, "Unknown network source");
+
+    if (/unusual access|unauthorized|unexpected access/.test(data))
+      add(30, "Unusual access activity");
+
+    if (/port scan|excessive requests/.test(data))
+      add(30, "Unusual network event indicator");
+  }
+
+  // MALWARE INDICATOR DETECTION
+  if (type === "malware") {
+
+    if (/trojan|ransomware|keylogger/.test(data))
+      add(40, "Known malware-related terminology");
+
+    if (/\.exe|\.bat|\.scr/.test(data))
+      add(15, "Executable file extension");
+
+    if (/unknown executable|suspicious file/.test(data))
+      add(30, "Unrecognized or suspicious file indicator");
+
+    if (/autorun|obfuscated/.test(data))
+      add(20, "Potentially suspicious file behavior indicator");
+  }
+
+  // UNAUTHORIZED ACCESS DETECTION
+  if (type === "access") {
+
+    if (/failed login|login attempts/.test(data))
+      add(30, "Repeated login failure indicator");
+
+    if (/admin|root/.test(data))
+      add(15, "Privileged account mentioned");
+
+    if (/unknown user|unauthorized user/.test(data))
+      add(35, "Unknown user activity");
+
+    if (/unusual time|unexpected location/.test(data))
+      add(25, "Unusual access context");
+  }
+
+  score = Math.min(score, 100);
+
+  let classification;
+  let color;
+  let advice;
+
+  if (score >= 60) {
+    classification = "HIGH RISK - Potential Threat";
+    color = "danger";
+    threats++;
+    advice = "Do not interact with suspicious content. Verify through a trusted security channel.";
+  }
+  else if (score >= 30) {
+    classification = "MEDIUM RISK - Suspicious Activity";
+    color = "warning";
+    threats++;
+    advice = "Investigate the activity and verify its source before taking action.";
+  }
+  else {
+    classification = "LOW RISK - No Strong Warning Indicators";
+    color = "safe";
+    safe++;
+    advice = "No strong warning indicators were found. This does not guarantee safety.";
+  }
+
+  scans++;
+
+  document.getElementById("total").textContent = scans;
+  document.getElementById("threats").textContent = threats;
+  document.getElementById("safe").textContent = safe;
+
+  let result = document.getElementById("result");
+  result.style.display = "block";
+
+  document.getElementById("status").className = color;
+  document.getElementById("status").textContent = classification;
+
+  document.getElementById("score").textContent =
+    "Risk Score: " + score + " / 100";
+
+  document.getElementById("details").textContent =
+    "Detection Indicators: " +
+    (reasons.length ? reasons.join("; ") : "No matching indicators found");
+
+  document.getElementById("advice").textContent =
+    "Recommendation: " + advice;
+
+  saveHistory(type, classification, score);
+}
+
+function saveHistory(type, status, score) {
+
+  let history = document.getElementById("history");
+
+  if (history.textContent === "No scans performed yet.") {
+    history.textContent = "";
+  }
+
+  let item = document.createElement("div");
+  item.className = "history-item";
+
+  let heading = document.createElement("strong");
+  heading.textContent = type.toUpperCase() + " - " + status;
+
+  let detail = document.createElement("p");
+  detail.textContent = "Risk Score: " + score + "/100";
+
+  item.appendChild(heading);
+  item.appendChild(detail);
+
+  history.prepend(item);
+}
+
+function clearHistory() {
+  document.getElementById("history").textContent =
+    "No scans performed yet.";
+}
+
+</script>
+
+</body>
+</html>
